@@ -24,9 +24,11 @@ func (p *SubscriberPostgres) CreateSubscriber(subscriber models.Subscriber) (int
 		0)
 
 	if err := row.Scan(&id); err != nil {
-		logrus.Printf("repo: CreateSubscriber(): %v", err.Error())
+		logrus.Printf("Level: repos; func CreateSubscriber(): err=%v", err.Error())
 		return 0, err
 	}
+
+	logrus.Printf("Level: repos; func CreateSubscriber(): created user with id=%d", id)
 
 	return id, nil
 }
@@ -35,47 +37,41 @@ func (p *SubscriberPostgres) GetAllSubscribers() ([]models.Subscriber, error) {
 	logrus.Printf("%v", p.db != nil)
 
 	var subscribers []models.Subscriber
-	getAllQuery := fmt.Sprintf("SELECT id, chat_id FROM %s", subscribersTable)
-	err := p.db.Select(&subscribers, getAllQuery)
+	getAllSubscribersQuery := fmt.Sprintf("SELECT id, chat_id FROM %s", subscribersTable)
+	err := p.db.Select(&subscribers, getAllSubscribersQuery)
 
 	if err != nil {
-		logrus.Printf("repo: GetAllSubscribers(): %v", err.Error())
+		logrus.Printf("Level: repos; func GetAllSubscribers(): err=%v", err.Error())
 	}
+
+	logrus.Printf("Level: repos; func GetAllSubscribers(): status=success")
 
 	return subscribers, err
 }
 
 func (p *SubscriberPostgres) GetSubscriber(chatId int64) (models.Subscriber, error) {
 	var subscriber models.Subscriber
-	query := fmt.Sprintf("SELECT id, chat_id, dialog_status, service_in_progress_id FROM %s WHERE chat_id = $1", subscribersTable)
-	err := p.db.Get(&subscriber, query, chatId)
+	getSubscriberQuery := fmt.Sprintf("SELECT id, chat_id, dialog_status, service_in_progress_id FROM %s WHERE chat_id = $1", subscribersTable)
+	err := p.db.Get(&subscriber, getSubscriberQuery, chatId)
 
 	if err != nil {
-		logrus.Printf("repo: GetSubscriber(): subscriber with chat_id: %v does not exist", chatId)
+		logrus.Printf("Level: repos; func GetSubscriber(): subscriber with chat_id: %v does not exist", chatId)
 	}
+
+	logrus.Printf("Level: repos; func GetSubscriber(): subscriber=%v", subscriber)
 
 	return subscriber, err
 }
 
-//func (p *SubscriberPostgres) GetSubscriberServiceInProgress(chatId int64) (models.Subscriber, error) {
-//	var subscriber models.Subscriber
-//	query := fmt.Sprintf("SELECT id, chat_id, dialog_status FROM %s WHERE chat_id = $1", subscribersTable)
-//	err := p.db.Get(&subscriber, query, chatId)
-//
-//	if err != nil {
-//		logrus.Printf("repo: GetSubscriber(): subscriber with chat_id: %v does not exist", chatId)
-//	}
-//
-//	return subscriber, err
-//}
-
 func (p *SubscriberPostgres) DeleteSubscriber(chatId int64) error {
-	deleteCartItemByIDQuery := fmt.Sprintf("DELETE FROM %s WHERE chat_id = %d", subscribersTable, chatId)
-	_, err := p.db.Exec(deleteCartItemByIDQuery)
+	deleteSubscriberQuery := fmt.Sprintf("DELETE FROM %s WHERE chat_id = %d", subscribersTable, chatId)
+	_, err := p.db.Exec(deleteSubscriberQuery)
 
 	if err != nil {
-		logrus.Printf("repo: DeleteSubscriber(): %v", err.Error())
+		logrus.Printf("Level: repos; func DeleteSubscriber(): err=%v", err.Error())
 	}
+
+	logrus.Printf("Level: repos; func DeleteSubscriber(): status=success")
 
 	return err
 }
@@ -85,8 +81,10 @@ func (p *SubscriberPostgres) UpdateSubscriberDialogStatus(chatId int64, dialogSt
 	_, err := p.db.Exec(updateSubscriberStatusQuery, dialogStatus)
 
 	if err != nil {
-		logrus.Printf("repo: UpdateSubscriberDialogStatus(): %v", err.Error())
+		logrus.Printf("Level: repos; func UpdateSubscriberDialogStatus(): err=%v", err.Error())
 	}
+
+	logrus.Printf("Level: repos; func UpdateSubscriberDialogStatus(): status=success")
 
 	return err
 }
@@ -96,8 +94,10 @@ func (p *SubscriberPostgres) UpdateSubscriberServiceInProgressID(chatId int64, s
 	_, err := p.db.Exec(updateSubscriberStatusQuery, serviceID)
 
 	if err != nil {
-		logrus.Printf("repo: UpdateSubscriberServiceInProgressID(): %v", err.Error())
+		logrus.Printf("Level: repos; func UpdateSubscriberServiceInProgressID(): err=%v", err.Error())
 	}
+
+	logrus.Printf("Level: repos; func UpdateSubscriberServiceInProgressID(): status=success")
 
 	return err
 }

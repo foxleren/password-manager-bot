@@ -3,6 +3,15 @@ package telegram
 import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 const (
+	replyStart               = "Добро пожаловать! Для использования сервиса подпишитесь командой /subscribe.\n"
+	replyUnknownCommand      = "Неизвестная команда."
+	successfulSubscription   = "Вы успешно подписались!"
+	successfulUnsubscription = "Вы успешно отписались."
+	subscriptionStatusGood   = "Статус подписки: активирована."
+	subscriptionStatusBad    = "Статус подписки: деактивирована."
+)
+
+const (
 	ReplySendServiceNameToSet    = "Пришлите название сервиса, который хотите сохранить."
 	ReplySendServiceNameToGet    = "Пришлите название сервиса, который хотите получить."
 	ReplySendServiceNameToDelete = "Пришлите название сервиса, который хотите удалить."

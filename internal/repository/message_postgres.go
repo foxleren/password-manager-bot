@@ -26,7 +26,7 @@ func (p *MessagePostgres) CreateMessage(chatId int64, messageId int) (int, error
 	)
 
 	if err := row.Scan(&id); err != nil {
-		logrus.Printf("Level: repos; func UpdateSubscriberServicePassword(): error while creating service with name: %s")
+		logrus.Printf("Level: repos; func CreateMessage(): error while creating message with id: %d", messageId)
 		return 0, err
 	}
 
@@ -35,23 +35,23 @@ func (p *MessagePostgres) CreateMessage(chatId int64, messageId int) (int, error
 
 func (p *MessagePostgres) GetAllOutdatedMessages(lastFreshDate time.Time) ([]models.Message, error) {
 	var messages []models.Message
-	getAllQuery := fmt.Sprintf("SELECT * FROM %s WHERE message_date <= $1", messagesTable)
-	err := p.db.Select(&messages, getAllQuery, lastFreshDate)
+	getAllOutdatedMessagesQuery := fmt.Sprintf("SELECT * FROM %s WHERE message_date <= $1", messagesTable)
+	err := p.db.Select(&messages, getAllOutdatedMessagesQuery, lastFreshDate)
 
 	if err != nil {
-		logrus.Printf("repo: GetAllOutdatedMessages(): err=%v", err.Error())
+		logrus.Printf("Level: repos; GetAllOutdatedMessages(): err=%v", err.Error())
 		return nil, err
 	}
 
-	deleteCartItemByIDQuery := fmt.Sprintf("DELETE FROM %s WHERE message_date <= $1", messagesTable)
-	_, err = p.db.Exec(deleteCartItemByIDQuery, lastFreshDate)
+	deleteOutdatedMessagesQuery := fmt.Sprintf("DELETE FROM %s WHERE message_date <= $1", messagesTable)
+	_, err = p.db.Exec(deleteOutdatedMessagesQuery, lastFreshDate)
 
 	if err != nil {
-		logrus.Printf("repo: GetAllOutdatedMessages(): err=%v", err.Error())
+		logrus.Printf("Level: repos; GetAllOutdatedMessages(): err=%v", err.Error())
 		return nil, err
 	}
 
-	logrus.Printf("GetAllOutdatedMessages(): []=", messages)
+	logrus.Printf("Level: repos; func GetAllOutdatedMessages(): status=success")
 
 	return messages, err
 }

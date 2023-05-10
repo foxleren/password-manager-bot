@@ -15,14 +15,6 @@ const (
 	commandSubscribe      = "subscribe"
 	commandCheckSubscribe = "check_subscription"
 	commandUnsubscribe    = "unsubscribe"
-
-	replyStart          = "Добро пожаловать!\n"
-	replyUnknownCommand = "Неизвестная команда."
-
-	successfulSubscription   = "Вы успешно подписались!"
-	successfulUnsubscription = "Вы успешно отписались."
-	subscriptionStatusGood   = "Статус подписки: активирована."
-	subscriptionStatusBad    = "Статус подписки: деактивирована."
 )
 
 func (b *Bot) handleCommand(update *tgbotapi.Update) error {
@@ -50,11 +42,11 @@ func (b *Bot) handleCommand(update *tgbotapi.Update) error {
 func (b *Bot) handleMessage(update *tgbotapi.Update) error {
 	subscriber, err := b.repo.GetSubscriber(update.Message.Chat.ID)
 	if err != nil {
-		logrus.Println("handleMessage(): error with subscriber_id %v", subscriber.ID)
+		logrus.Println("Level: service.telegram; handleMessage(): error while getting subscriber with subscriber_id %v", subscriber.ID)
 		return errDisabledCommand
 	}
 
-	logrus.Println("handleMessage(): got subscriber %v", subscriber)
+	//logrus.Println("Level: service.telegram; handleMessage(): got subscriber %v", subscriber)
 
 	switch subscriber.DialogStatus {
 	case models.DialogStatusNone:
@@ -66,7 +58,7 @@ func (b *Bot) handleMessage(update *tgbotapi.Update) error {
 			}
 			err = b.repo.UpdateSubscriberDialogStatus(update.Message.Chat.ID, models.DialogStatusGetServiceName)
 			if err != nil {
-				logrus.Println("handleMessage(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
+				logrus.Println("Level: service.telegram; handleMessage(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
 				return err
 			}
 		}
@@ -74,7 +66,7 @@ func (b *Bot) handleMessage(update *tgbotapi.Update) error {
 		{
 			_, err = b.repo.SubscriberService.CreateSubscriberServiceByName(subscriber.ID, update.Message.Text)
 			if err != nil {
-				logrus.Printf("error in handler")
+				logrus.Println("Level: service.telegram; handleMessage(): error while creating service by name for subscriber: %v", subscriber.ID)
 				return errUnableToSetService
 			}
 			err := b.sendReply(update.Message.Chat.ID, ReplyServiceNameIsSet)
@@ -83,7 +75,7 @@ func (b *Bot) handleMessage(update *tgbotapi.Update) error {
 			}
 			err = b.repo.UpdateSubscriberDialogStatus(update.Message.Chat.ID, models.DialogStatusSetServiceLogin)
 			if err != nil {
-				logrus.Println("handleMessage(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
+				logrus.Println("Level: service.telegram; handleMessage(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
 				return err
 			}
 		}
@@ -91,7 +83,7 @@ func (b *Bot) handleMessage(update *tgbotapi.Update) error {
 		{
 			err = b.repo.SubscriberService.UpdateSubscriberServiceLogin(subscriber.ID, subscriber.ServiceInProgressID, update.Message.Text)
 			if err != nil {
-				logrus.Printf("error in handler")
+				logrus.Println("Level: service.telegram; handleMessage(): error while updating service login for subscriber: %v", subscriber.ID)
 				return err
 			}
 			err := b.sendReply(update.Message.Chat.ID, ReplyServiceLoginIsSet)
@@ -100,7 +92,7 @@ func (b *Bot) handleMessage(update *tgbotapi.Update) error {
 			}
 			err = b.repo.UpdateSubscriberDialogStatus(update.Message.Chat.ID, models.DialogStatusSetServicePassword)
 			if err != nil {
-				logrus.Println("handleMessage(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
+				logrus.Println("Level: service.telegram; handleMessage(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
 				return err
 			}
 		}
@@ -108,7 +100,7 @@ func (b *Bot) handleMessage(update *tgbotapi.Update) error {
 		{
 			err = b.repo.SubscriberService.UpdateSubscriberServicePassword(subscriber.ID, subscriber.ServiceInProgressID, update.Message.Text)
 			if err != nil {
-				logrus.Printf("error in handler")
+				logrus.Println("Level: service.telegram; handleMessage(): error while updating service password for subscriber: %v", subscriber.ID)
 				return err
 			}
 			err := b.sendReply(update.Message.Chat.ID, ReplyServicePasswordIsSet)
@@ -117,7 +109,7 @@ func (b *Bot) handleMessage(update *tgbotapi.Update) error {
 			}
 			err = b.repo.UpdateSubscriberDialogStatus(update.Message.Chat.ID, models.DialogStatusNone)
 			if err != nil {
-				logrus.Println("handleMessage(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
+				logrus.Println("Level: service.telegram; handleMessage(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
 				return err
 			}
 		}
@@ -125,6 +117,7 @@ func (b *Bot) handleMessage(update *tgbotapi.Update) error {
 		{
 			services, err := b.repo.SubscriberService.GetSubscriberServiceByName(update.Message.Chat.ID, update.Message.Text)
 			if err != nil {
+				logrus.Println("Level: service.telegram; handleMessage(): error while getting service by name for subscriber: %v", subscriber.ID)
 				return errUnableToGetService
 			}
 
@@ -136,12 +129,13 @@ func (b *Bot) handleMessage(update *tgbotapi.Update) error {
 
 			_, err = b.repo.CreateMessage(update.Message.Chat.ID, sentMsg.MessageID)
 			if err != nil {
+				logrus.Println("Level: service.telegram; handleMessage(): error while saving message subscriber: %v", subscriber.ID)
 				return err
 			}
 
 			err = b.repo.UpdateSubscriberDialogStatus(update.Message.Chat.ID, models.DialogStatusNone)
 			if err != nil {
-				logrus.Println("handleCommandSet(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
+				logrus.Println("Level: service.telegram; handleMessage(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
 				return err
 			}
 		}
@@ -149,6 +143,7 @@ func (b *Bot) handleMessage(update *tgbotapi.Update) error {
 		{
 			err := b.repo.SubscriberService.DeleteSubscriberService(update.Message.Chat.ID, update.Message.Text)
 			if err != nil {
+				logrus.Println("Level: service.telegram; handleMessage(): error while deleting service for subscriber: %v", subscriber.ID)
 				return errUnableToDeleteService
 			}
 
@@ -159,7 +154,7 @@ func (b *Bot) handleMessage(update *tgbotapi.Update) error {
 
 			err = b.repo.UpdateSubscriberDialogStatus(update.Message.Chat.ID, models.DialogStatusNone)
 			if err != nil {
-				logrus.Println("handleCommandSet(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
+				logrus.Println("Level: service.telegram; handleMessage(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
 				return err
 			}
 		}
@@ -190,7 +185,7 @@ func (b *Bot) handleCommandSubscribe(message *tgbotapi.Message) error {
 	var id int
 	id, err := b.repo.CreateSubscriber(subscriber)
 	if err != nil {
-		logrus.Printf("Error in  handleCommandSubscribe(): %v", err.Error())
+		logrus.Printf("Level: service.telegram; func handleCommandSubscribe(): error while creating subscriber: err=%v", err.Error())
 		return errUnableToSubscribe
 	}
 
@@ -208,11 +203,9 @@ func (b *Bot) handleCommandSubscribe(message *tgbotapi.Message) error {
 func (b *Bot) handleCommandUnsubscribe(message *tgbotapi.Message) error {
 	err := b.repo.DeleteSubscriber(message.Chat.ID)
 	if err != nil {
-		logrus.Printf("Error in  handleCommandUnsubscribe(): %v", err.Error())
+		logrus.Printf("Level: service.telegram; func handleCommandUnsubscribe(): error while deleting subscriber: err=%v", err.Error())
 		return errUnableToUnsubscribe
 	}
-
-	logrus.Println("Unsubscribed successfully.")
 
 	msg := tgbotapi.NewMessage(message.Chat.ID, successfulUnsubscription)
 	_, err = b.bot.Send(msg)
@@ -229,14 +222,14 @@ func (b *Bot) handleCommandCheckSubscribe(message *tgbotapi.Message) error {
 		msg := tgbotapi.NewMessage(message.Chat.ID, subscriptionStatusBad)
 		_, err = b.bot.Send(msg)
 		if err != nil {
-			logrus.Printf("Error in  handleCommandCheckSubscribe(): %v", err.Error())
+			logrus.Printf("Level: service.telegram; func handleCommandCheckSubscribe(): error while checking subscriber status: err=%v", err.Error())
 			return err
 		}
 	} else {
 		msg := tgbotapi.NewMessage(message.Chat.ID, subscriptionStatusGood)
 		_, err = b.bot.Send(msg)
 		if err != nil {
-			logrus.Printf("Error in  handleCommandCheckSubscribe(): %v", err.Error())
+			logrus.Printf("Level: service.telegram; func handleCommandCheckSubscribe(): error while checking subscriber status: err=%v", err.Error())
 			return err
 		}
 	}
@@ -247,10 +240,9 @@ func (b *Bot) handleCommandCheckSubscribe(message *tgbotapi.Message) error {
 func (b *Bot) handleCommandSet(update *tgbotapi.Update) error {
 	subscriber, err := b.repo.GetSubscriber(update.Message.Chat.ID)
 	if err != nil {
+		logrus.Printf("Level: service.telegram; func handleCommandSet(): error while getting subscriber: err=%v", err.Error())
 		return errDisabledCommand
 	}
-
-	logrus.Println("handleCommandSet(): got subscriber %v", subscriber)
 
 	if subscriber.ServiceInProgressID != 0 {
 		return b.sendReply(update.Message.Chat.ID, ReplyFinishSettingService)
@@ -261,7 +253,7 @@ func (b *Bot) handleCommandSet(update *tgbotapi.Update) error {
 		{
 			err = b.repo.UpdateSubscriberDialogStatus(update.Message.Chat.ID, models.DialogStatusSetServiceName)
 			if err != nil {
-				logrus.Println("handleCommandSet(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
+				logrus.Println("Level: service.telegram; func handleCommandSet(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
 				return err
 			}
 			err := b.sendReply(update.Message.Chat.ID, ReplySendServiceNameToSet)
@@ -285,7 +277,7 @@ func (b *Bot) handleCommandSet(update *tgbotapi.Update) error {
 		{
 			err = b.repo.UpdateSubscriberDialogStatus(update.Message.Chat.ID, models.DialogStatusSetServiceName)
 			if err != nil {
-				logrus.Println("handleCommandSet(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
+				logrus.Println("Level: service.telegram; func handleCommandSet(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
 				return err
 			}
 			err := b.sendReply(update.Message.Chat.ID, ReplySendServiceNameToSet)
@@ -301,9 +293,9 @@ func (b *Bot) handleCommandSet(update *tgbotapi.Update) error {
 func (b *Bot) handleCommandGet(update *tgbotapi.Update) error {
 	subscriber, err := b.repo.GetSubscriber(update.Message.Chat.ID)
 	if err != nil {
+		logrus.Printf("Level: service.telegram; func handleCommandGet(): error while getting subscriber: err=%v", err.Error())
 		return errDisabledCommand
 	}
-	logrus.Println("handleCommandSet(): got subscriber %v", subscriber)
 
 	if subscriber.ServiceInProgressID != 0 {
 		return b.sendReply(update.Message.Chat.ID, ReplyFinishSettingService)
@@ -335,6 +327,7 @@ func (b *Bot) handleCommandDel(update *tgbotapi.Update) error {
 
 	err = b.repo.UpdateSubscriberDialogStatus(update.Message.Chat.ID, models.DialogStatusDelService)
 	if err != nil {
+		logrus.Println("Level: service.telegram; func handleCommandDel(): error while updating dialog_status for subscriber_id: %v", subscriber.ID)
 		return err
 	}
 

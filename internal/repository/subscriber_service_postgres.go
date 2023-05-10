@@ -93,23 +93,11 @@ func (p *SubscriberServicePostgres) UpdateSubscriberServicePassword(subscriberId
 	}
 
 	updateSubscriberServiceInProgressQuery := fmt.Sprintf("UPDATE %s SET service_in_progress_id = $1 WHERE id = %d", subscribersTable, subscriberId)
-	_, err = tx.Exec(updateSubscriberServiceInProgressQuery, subscriberServiceID)
-
-	if err != nil {
-		logrus.Printf("Level: repos; func UpdateSubscriberServicePassword(): error while updating service_in_progress_id for subscriber with id: %s", subscriberId)
-		tx.Rollback()
-	}
-
-	updateSubscriberStatusQuery := fmt.Sprintf("UPDATE %s SET service_in_progress_id = $1 WHERE id = %d", subscribersTable, subscriberId)
-	_, err = tx.Exec(updateSubscriberStatusQuery, 0)
+	_, err = tx.Exec(updateSubscriberServiceInProgressQuery, 0)
 
 	if err != nil {
 		logrus.Printf("Level: repos; func UpdateSubscriberServicePassword(): error while updating service_in_progress_id for subscriber with default id: %s", 0)
 		tx.Rollback()
-	}
-
-	if err != nil {
-		logrus.Printf("repo: UpdateSubscriberServiceInProgressID(): %v", err.Error())
 	}
 
 	logrus.Printf("Level: repos; func UpdateSubscriberServicePassword(): service_id=%d", subscriberServiceID)
@@ -155,7 +143,7 @@ func (p *SubscriberServicePostgres) DeleteSubscriberService(chatId int64, servic
 	_, err = p.db.Exec(query, serviceName, chatId)
 
 	if err != nil {
-		logrus.Printf("repo: DeleteSubscriber(): %v", err.Error())
+		logrus.Printf("Level: repos; func DeleteSubscriber(): %v", err.Error())
 	}
 
 	return err
