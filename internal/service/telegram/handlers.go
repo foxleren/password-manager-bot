@@ -139,8 +139,13 @@ func (b *Bot) handleMessage(update *tgbotapi.Update) error {
 			}
 
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
+			msg.ParseMode = tgbotapi.ModeMarkdown
+			sentMsg, err := b.bot.Send(msg)
 
-			b.bot.Send(msg)
+			_, err = b.repo.CreateMessage(update.Message.Chat.ID, sentMsg.MessageID)
+			if err != nil {
+				return err
+			}
 
 			err = b.repo.UpdateSubscriberDialogStatus(update.Message.Chat.ID, models.DialogStatusNone)
 			if err != nil {

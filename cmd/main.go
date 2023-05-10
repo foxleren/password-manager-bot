@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	"os"
+	"strconv"
 )
 
 func main() {
@@ -41,7 +42,12 @@ func main() {
 	repos := repository.NewRepository(db)
 	//services := service.NewService(repos)
 
-	tgBot := telegram.NewBot(bot, *repos)
+	messageTTLInMinutes, err := strconv.Atoi(viper.GetString("bot.messageTTLInMinutes"))
+	if err != nil {
+		logrus.Fatalf("Caught error while parsing bot.messageTTLInMinutes ", err.Error())
+	}
+
+	tgBot := telegram.NewBot(bot, *repos, messageTTLInMinutes)
 	if err = tgBot.Start(); err != nil {
 		log.Fatal(err)
 	}

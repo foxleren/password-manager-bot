@@ -49,10 +49,19 @@ func (p *SubscriberServicePostgres) CreateSubscriberServiceByName(subscriberID i
 		return 0, err
 	}
 
+	// TODO:возвращать ошибку не уникального имени
 	addServiceToSubscriberQuery := fmt.Sprintf("INSERT INTO %s (subscriber_id, service_id) VALUES ($1, $2)", subscribersServicesTable)
 	_, err = tx.Exec(addServiceToSubscriberQuery, subscriberID, sbsServiceID)
 	if err != nil {
-		logrus.Printf("Level: repos; func CreateSubscriberServiceByName(): error while adding service to subscriber with id: %s", subscriberID)
+		logrus.Printf("Level: repos; func CreateSubscriberServiceByName(): error while adding service to subscriber with id: %s, err=%v", subscriberID, err.Error())
+		tx.Rollback()
+		return 0, err
+	}
+
+	addServiceNameToSubscriberQuery := fmt.Sprintf("INSERT INTO %s (subscriber_id, service_name) VALUES ($1, $2)", subscribersServiceNamesTable)
+	_, err = tx.Exec(addServiceNameToSubscriberQuery, subscriberID, subscriberServiceName)
+	if err != nil {
+		logrus.Printf("Level: repos; func CreateSubscriberServiceByName(): error while adding service_name to subscriber with id: %s, err=%v", subscriberID, err.Error())
 		tx.Rollback()
 		return 0, err
 	}
@@ -142,8 +151,6 @@ func (p *SubscriberServicePostgres) GetAllSubscriberServicesByName(chatId int64,
 	if err != nil {
 		logrus.Printf("Level: repos; func UpdateSubscriberServicePassword(): error while getting all services (err=%v)", err.Error())
 	}
-
-	logrus.Printf("services: %v", services)
 
 	return services, err
 }

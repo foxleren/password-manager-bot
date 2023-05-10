@@ -20,3 +20,19 @@ CREATE TABLE subscribers_services
     service_id    serial references services (id) on delete cascade    not null,
     PRIMARY KEY (subscriber_id, service_id)
 );
+
+CREATE TABLE subscribers_service_names
+(
+    subscriber_id serial references subscribers (id) on delete cascade not null,
+    service_name  varchar(128)                                         not null,
+    PRIMARY KEY (subscriber_id, service_name)
+);
+
+CREATE TABLE messages
+(
+    id           serial       not null unique,
+    message_id   int          not null,
+    chat_id      int          not null,
+    message_date timestamp(0) not null,
+    PRIMARY KEY (message_id, chat_id)
+)

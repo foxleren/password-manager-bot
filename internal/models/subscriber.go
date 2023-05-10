@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 )
 
@@ -37,11 +36,7 @@ type SubscriberServiceOutput struct {
 }
 
 func (s SubscriberServiceOutput) String() string {
-	return fmt.Sprintf(`Название сервиса: %s
-Логин: %s
-Пароль:%s
-
-`,
+	return fmt.Sprintf("Название сервиса: `%s`\nЛогин: `%s`\nПароль: `%s`\n",
 		s.ServiceName,
 		s.ServiceLogin,
 		s.ServicePassword)
@@ -50,7 +45,7 @@ func (s SubscriberServiceOutput) String() string {
 func FormatAllSubscriberServiceOutput(slice []SubscriberServiceOutput) string {
 	var sb = strings.Builder{}
 	for i := 0; i < len(slice); i++ {
-		sb.WriteString(strconv.Itoa(i+1) + ". " + slice[i].String())
+		sb.WriteString(slice[i].String())
 	}
 	return sb.String()
 }

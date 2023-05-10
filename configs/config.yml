@@ -1,5 +1,8 @@
 port: "8000"
 
+bot:
+  messageTTLInMinutes: 5
+
 db:
   host: "localhost"
   port: "5432"

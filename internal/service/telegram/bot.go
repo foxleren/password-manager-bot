@@ -9,14 +9,16 @@ import (
 )
 
 type Bot struct {
-	bot  *tgbotapi.BotAPI
-	repo repository.Repository
+	bot                 *tgbotapi.BotAPI
+	repo                repository.Repository
+	messageTTLInMinutes int
 }
 
-func NewBot(bot *tgbotapi.BotAPI, repo repository.Repository) *Bot {
+func NewBot(bot *tgbotapi.BotAPI, repo repository.Repository, ttlInMinutes int) *Bot {
 	return &Bot{
-		bot:  bot,
-		repo: repo,
+		bot:                 bot,
+		repo:                repo,
+		messageTTLInMinutes: ttlInMinutes,
 	}
 }
 
@@ -66,25 +68,51 @@ func (b *Bot) initUpdatesChannel() tgbotapi.UpdatesChannel {
 
 func (b *Bot) sendDataToSubscribers() {
 	for {
-		err := b.compileParser()
+		outdatedMessages, err := b.repo.Message.GetAllOutdatedMessages(b.messageTTLInMinutes)
 		if err != nil {
-			logrus.Println("Error while compiling python script: %s", err.Error())
+			return
 		}
 
-		subscribers, err := b.repo.GetAllSubscribers()
-		if err != nil {
-			log.Printf("Error in GetAllSubscribers(): %v", err.Error())
-			continue
+		for _, msg := range outdatedMessages {
+
+			deleteMsg := tgbotapi.NewDeleteMessage(msg.ChatId, msg.MessageId)
+
+			// Опционально, задайте время задержки перед удалением сообщения (например, 5 секунд)
+			//deleteMsg. = time.Second * 5
+
+			// Отправка запроса на удаление сообщения
+			_, err = b.bot.Send(deleteMsg)
+
+			//
+			//_, err = b.bot(delMsg)
+			//if err != nil {
+			//	log.Panic(err)
+			//}
 		}
 
-		logrus.Println("Starting sending data...")
-		for _, sbs := range subscribers {
-			go b.sendData(sbs.ChatId)
+		for i := 0; i < len(outdatedMessages); i++ {
+
 		}
-		logrus.Println("Finishing sending data...")
+
+		//err := b.compileParser()
+		//if err != nil {
+		//	logrus.Println("Error while compiling python script: %s", err.Error())
+		//}
+		//
+		//subscribers, err := b.repo.GetAllSubscribers()
+		//if err != nil {
+		//	log.Printf("Error in GetAllSubscribers(): %v", err.Error())
+		//	continue
+		//}
+		//
+		//logrus.Println("Starting sending data...")
+		//for _, sbs := range subscribers {
+		//	go b.sendData(sbs.ChatId)
+		//}
+		//logrus.Println("Finishing sending data...")
 
 		logrus.Println("Taking timeout...")
-		time.Sleep(24 * time.Hour)
+		time.Sleep(time.Duration(b.messageTTLInMinutes) * time.Second)
 	}
 }
 

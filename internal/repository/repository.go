@@ -22,14 +22,21 @@ type SubscriberService interface {
 	GetAllSubscriberServicesByName(chatId int64, serviceName string) ([]models.SubscriberServiceOutput, error)
 }
 
+type Message interface {
+	CreateMessage(chatId int64, messageId int) (int, error)
+	GetAllOutdatedMessages(messageTTLInMinutes int) ([]models.Message, error)
+}
+
 type Repository struct {
 	Subscriber
 	SubscriberService
+	Message
 }
 
 func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{
 		Subscriber:        NewSubscriberPostgres(db),
 		SubscriberService: NewSubscriberServicePostgres(db),
+		Message:           NewMessagePostgres(db),
 	}
 }
