@@ -1,12 +1,12 @@
 port: "8000"
 
 bot:
-  messageTTLInMinutes: 1
-  messageTTLInHours: 0
+  messageTTLInMinutes: 0
+  messageTTLInHours: 10
   outdatedMessagesSleepIntervalInHours: 10
 
 db:
-  host: "localhost"
+  host: "db"
   port: "5432"
   username: "postgres"
   dbname: "postgres"
