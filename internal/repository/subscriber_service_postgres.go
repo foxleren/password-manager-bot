@@ -111,25 +111,39 @@ func (p *SubscriberServicePostgres) UpdateSubscriberServicePassword(subscriberId
 		tx.Rollback()
 	}
 
+	updateSubscriberStatusQuery := fmt.Sprintf("UPDATE %s SET service_in_progress_id = $1 WHERE id = %d", subscribersTable, subscriberId)
+	_, err = tx.Exec(updateSubscriberStatusQuery, 0)
+
+	if err != nil {
+		logrus.Printf("Level: repos; func UpdateSubscriberServicePassword(): error while updating service_in_progress_id for subscriber with default id: %s", 0)
+		tx.Rollback()
+	}
+
+	if err != nil {
+		logrus.Printf("repo: UpdateSubscriberServiceInProgressID(): %v", err.Error())
+	}
+
 	logrus.Printf("Level: repos; func UpdateSubscriberServicePassword(): service_id=%d", subscriberServiceID)
 
 	return tx.Commit()
 }
 
-func (p *SubscriberServicePostgres) GetSubscriberServiceByName(userId int, serviceName string) (*models.SubscriberService, error) {
-	var service models.SubscriberService
+func (p *SubscriberServicePostgres) GetAllSubscriberServicesByName(chatId int64, serviceName string) ([]models.SubscriberServiceOutput, error) {
+	var services []models.SubscriberServiceOutput
 	query := fmt.Sprintf(
-		`SELECT service_id, service_name, service_login, service_password
+		`SELECT service_name, service_login, service_password
 					FROM (
 					(%s subs JOIN %s ss on subs.id = ss.subscriber_id) as subs_and_serv_id
 					JOIN %s s on subs_and_serv_id.service_id = s.id
-					) WHERE service_name = $1
+					) WHERE service_name = $1 AND chat_id = $2
 		`, subscribersTable, subscribersServicesTable, servicesTable)
-	err := p.db.Get(&service, query, serviceName)
+	err := p.db.Select(&services, query, serviceName, chatId)
 
 	if err != nil {
-		logrus.Printf("repo: GetSubscriber(): subscriber with chat_id: %v does not exist", userId)
+		logrus.Printf("Level: repos; func UpdateSubscriberServicePassword(): error while getting all services (err=%v)", err.Error())
 	}
 
-	return &service, err
+	logrus.Printf("services: %v", services)
+
+	return services, err
 }

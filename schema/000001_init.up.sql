@@ -9,7 +9,7 @@ CREATE TABLE subscribers
 CREATE TABLE services
 (
     id               serial       not null unique,
-    service_name     varchar(128) not null unique,
+    service_name     varchar(128) not null,
     service_login    varchar(128) not null,
     service_password varchar(128) not null
 );

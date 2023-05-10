@@ -18,6 +18,19 @@ const (
 	disabledCommandReply    = "Подпишитесь для использования этой функции!"
 )
 
+const (
+	ReplySendServiceName      = "Пришлите название сервиса"
+	ReplySendServiceLogin     = "Пришлите логин сервиса"
+	ReplySendServicePassword  = "Пришлите пароль сервиса"
+	ReplyFinishSettingService = "Функция не доступна! Необходимо завершить добавление сервиса!"
+)
+
+const (
+	ReplyServiceNameIsSet     = "Название сервиса задано! Пришлите логин сервиса."
+	ReplyServiceLoginIsSet    = "Логин для сервиса задан! Пришлите пароль сервиса."
+	ReplyServicePasswordIsSet = "Пароль для сервиса задан! Сервис успешно добавлен!"
+)
+
 func (b *Bot) handleError(chatID int64, err error) {
 	msg := tgbotapi.NewMessage(chatID, "")
 	switch err {
@@ -31,4 +44,14 @@ func (b *Bot) handleError(chatID int64, err error) {
 		msg.Text = unknownError
 	}
 	b.bot.Send(msg)
+}
+
+func (b *Bot) sendReply(chatID int64, text string) error {
+	msg := tgbotapi.NewMessage(chatID, text)
+
+	_, err := b.bot.Send(msg)
+	if err != nil {
+		return err
+	}
+	return nil
 }

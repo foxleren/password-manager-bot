@@ -1,5 +1,11 @@
 package models
 
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
 type Subscriber struct {
 	ID                  int    `json:"id" db:"id"`
 	ChatId              int64  `json:"chat_id" db:"chat_id" binding:"required"`
@@ -8,10 +14,12 @@ type Subscriber struct {
 }
 
 const (
-	DialogStatusNone                      = "none"
-	DialogStatusWaitingForServiceName     = "wait service_name"
-	DialogStatusWaitingForServiceLogin    = "wait service_login"
-	DialogStatusWaitingForServicePassword = "wait service_password"
+	DialogStatusNone               = "none"
+	DialogStatusSetServiceName     = "set service_name"
+	DialogStatusSetServiceLogin    = "set service_login"
+	DialogStatusSetServicePassword = "set service_password"
+
+	DialogStatusGetServiceName = "get service_name"
 )
 
 type SubscriberService struct {
@@ -20,4 +28,29 @@ type SubscriberService struct {
 	ServiceName     string `json:"service_name" db:"service_name"`
 	ServiceLogin    string `json:"service_login" db:"service_login"`
 	ServicePassword string `json:"service_password" db:"service_password"`
+}
+
+type SubscriberServiceOutput struct {
+	ServiceName     string `json:"service_name" db:"service_name"`
+	ServiceLogin    string `json:"service_login" db:"service_login"`
+	ServicePassword string `json:"service_password" db:"service_password"`
+}
+
+func (s SubscriberServiceOutput) String() string {
+	return fmt.Sprintf(`Название сервиса: %s
+Логин: %s
+Пароль:%s
+
+`,
+		s.ServiceName,
+		s.ServiceLogin,
+		s.ServicePassword)
+}
+
+func FormatAllSubscriberServiceOutput(slice []SubscriberServiceOutput) string {
+	var sb = strings.Builder{}
+	for i := 0; i < len(slice); i++ {
+		sb.WriteString(strconv.Itoa(i+1) + ". " + slice[i].String())
+	}
+	return sb.String()
 }

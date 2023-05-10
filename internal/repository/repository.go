@@ -19,7 +19,7 @@ type SubscriberService interface {
 	CreateSubscriberServiceByName(subscriberID int, subscriberServiceName string) (int, error)
 	UpdateSubscriberServiceLogin(subscriberId int, subscriberServiceID int, subscriberServiceLogin string) error
 	UpdateSubscriberServicePassword(subscriberId int, subscriberServiceID int, subscriberServicePassword string) error
-	GetSubscriberServiceByName(userId int, serviceName string) (*models.SubscriberService, error)
+	GetAllSubscriberServicesByName(chatId int64, serviceName string) ([]models.SubscriberServiceOutput, error)
 }
 
 type Repository struct {
