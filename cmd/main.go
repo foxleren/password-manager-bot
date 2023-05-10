@@ -37,6 +37,10 @@ func main() {
 		Password: os.Getenv("DB_PASSWORD"),
 	})
 
+	if err != nil {
+		logrus.Fatalf("Caught error while creating database: ", err.Error())
+	}
+
 	repos := repository.NewRepository(db)
 
 	msgTTLInMinutes, err := strconv.Atoi(viper.GetString("bot.messageTTLInMinutes"))
