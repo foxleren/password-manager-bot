@@ -1,10 +1,7 @@
 FROM golang:1.18-buster
 
 RUN go version
-ENV GOPARH=/
-
-RUN mkdir backend
-WORKDIR /backend
+ENV GOPATH=/
 
 COPY ./ ./
 
@@ -16,6 +13,6 @@ RUN apt-get -y install postgresql-client
 RUN chmod +x wait-for-postgres.sh
 
 RUN go mod download
-RUN go build -o backend ./cmd/main.go
+RUN go build -o password-manager-bot ./cmd/main.go
 
-CMD ["./backend"]
+CMD ["./password-manager-bot"]

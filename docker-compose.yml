@@ -1,9 +1,9 @@
 version: '2.0'
 
 services:
-  games-on-backend:
+  password-manager-bot:
     build: ./
-    command: ./wait-for-postgres.sh db ./backend
+    command: ./wait-for-postgres.sh db ./password-manager-bot
     ports:
       - 8000:8000
     depends_on:
