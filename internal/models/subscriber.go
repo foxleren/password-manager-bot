@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"strings"
 )
 
 type Subscriber struct {
@@ -17,8 +16,8 @@ const (
 	DialogStatusSetServiceName     = "set service_name"
 	DialogStatusSetServiceLogin    = "set service_login"
 	DialogStatusSetServicePassword = "set service_password"
-
-	DialogStatusGetServiceName = "get service_name"
+	DialogStatusGetServiceName     = "get service_name"
+	DialogStatusDelService         = "del service_name"
 )
 
 type SubscriberService struct {
@@ -40,12 +39,4 @@ func (s SubscriberServiceOutput) String() string {
 		s.ServiceName,
 		s.ServiceLogin,
 		s.ServicePassword)
-}
-
-func FormatAllSubscriberServiceOutput(slice []SubscriberServiceOutput) string {
-	var sb = strings.Builder{}
-	for i := 0; i < len(slice); i++ {
-		sb.WriteString(slice[i].String())
-	}
-	return sb.String()
 }

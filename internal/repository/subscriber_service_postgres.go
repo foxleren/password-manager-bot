@@ -15,25 +15,6 @@ func NewSubscriberServicePostgres(db *sqlx.DB) *SubscriberServicePostgres {
 	return &SubscriberServicePostgres{db: db}
 }
 
-// TODO: сообщать о наличии сервиса с таким именем!!!
-func (p *SubscriberServicePostgres) CreateSubscriberService(subscriberService *models.SubscriberService) (int, error) {
-	var id int
-	createSubscriberServiceQuery := fmt.Sprintf("INSERT INTO %s (service_name, service_login, service_password) VALUES ($1, $2, $3) RETURNING id", servicesTable)
-	row := p.db.QueryRow(createSubscriberServiceQuery,
-		subscriberService.ServiceName,
-		subscriberService.ServiceLogin,
-		subscriberService.ServicePassword)
-
-	if err := row.Scan(&id); err != nil {
-		logrus.Printf("Level: repos; func CreateSubscriberService(): error while creating service with name: %s", subscriberService.ServiceName)
-		return 0, err
-	}
-
-	logrus.Printf("Level: repos; func CreateSubscriberService(): service_id=%d", id)
-
-	return id, nil
-}
-
 func (p *SubscriberServicePostgres) CreateSubscriberServiceByName(subscriberID int, subscriberServiceName string) (int, error) {
 	tx, err := p.db.Begin()
 
@@ -49,7 +30,6 @@ func (p *SubscriberServicePostgres) CreateSubscriberServiceByName(subscriberID i
 		return 0, err
 	}
 
-	// TODO:возвращать ошибку не уникального имени
 	addServiceToSubscriberQuery := fmt.Sprintf("INSERT INTO %s (subscriber_id, service_id) VALUES ($1, $2)", subscribersServicesTable)
 	_, err = tx.Exec(addServiceToSubscriberQuery, subscriberID, sbsServiceID)
 	if err != nil {
@@ -58,8 +38,8 @@ func (p *SubscriberServicePostgres) CreateSubscriberServiceByName(subscriberID i
 		return 0, err
 	}
 
-	addServiceNameToSubscriberQuery := fmt.Sprintf("INSERT INTO %s (subscriber_id, service_name) VALUES ($1, $2)", subscribersServiceNamesTable)
-	_, err = tx.Exec(addServiceNameToSubscriberQuery, subscriberID, subscriberServiceName)
+	addServiceNameToSubscriberQuery := fmt.Sprintf("INSERT INTO %s (subscriber_id, service_id, service_name) VALUES ($1, $2, $3)", subscribersServiceNamesTable)
+	_, err = tx.Exec(addServiceNameToSubscriberQuery, subscriberID, sbsServiceID, subscriberServiceName)
 	if err != nil {
 		logrus.Printf("Level: repos; func CreateSubscriberServiceByName(): error while adding service_name to subscriber with id: %s, err=%v", subscriberID, err.Error())
 		tx.Rollback()
@@ -137,8 +117,8 @@ func (p *SubscriberServicePostgres) UpdateSubscriberServicePassword(subscriberId
 	return tx.Commit()
 }
 
-func (p *SubscriberServicePostgres) GetAllSubscriberServicesByName(chatId int64, serviceName string) ([]models.SubscriberServiceOutput, error) {
-	var services []models.SubscriberServiceOutput
+func (p *SubscriberServicePostgres) GetSubscriberServiceByName(chatId int64, serviceName string) (*models.SubscriberServiceOutput, error) {
+	var services models.SubscriberServiceOutput
 	query := fmt.Sprintf(
 		`SELECT service_name, service_login, service_password
 					FROM (
@@ -146,11 +126,37 @@ func (p *SubscriberServicePostgres) GetAllSubscriberServicesByName(chatId int64,
 					JOIN %s s on subs_and_serv_id.service_id = s.id
 					) WHERE service_name = $1 AND chat_id = $2
 		`, subscribersTable, subscribersServicesTable, servicesTable)
-	err := p.db.Select(&services, query, serviceName, chatId)
+	err := p.db.Get(&services, query, serviceName, chatId)
 
 	if err != nil {
-		logrus.Printf("Level: repos; func UpdateSubscriberServicePassword(): error while getting all services (err=%v)", err.Error())
+		logrus.Printf("Level: repos; func GetSubscriberServiceByName(): error while getting all services (err=%v)", err.Error())
 	}
 
-	return services, err
+	logrus.Printf("Level: repos; func GetSubscriberServiceByName(): service=%v", services)
+
+	return &services, err
+}
+
+func (p *SubscriberServicePostgres) DeleteSubscriberService(chatId int64, serviceName string) error {
+	_, err := p.GetSubscriberServiceByName(chatId, serviceName)
+	if err != nil {
+		return err
+	}
+	query := fmt.Sprintf(
+		`DELETE FROM %s WHERE id =
+				(  
+    				SELECT service_id FROM 
+    				(
+        			(%s subs JOIN %s ss on subs.id = ss.subscriber_id) as subs_and_serv_id
+        			JOIN %s s on subs_and_serv_id.service_id = s.id
+    				)   WHERE s.service_name = $1 AND chat_id = $2
+				)
+		`, servicesTable, subscribersTable, subscribersServicesTable, servicesTable)
+	_, err = p.db.Exec(query, serviceName, chatId)
+
+	if err != nil {
+		logrus.Printf("repo: DeleteSubscriber(): %v", err.Error())
+	}
+
+	return err
 }

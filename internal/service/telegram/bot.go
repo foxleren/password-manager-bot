@@ -4,31 +4,34 @@ import (
 	"github.com/foxleren/password-manager-bot/internal/repository"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/siruspen/logrus"
-	"log"
 	"time"
 )
 
 type Bot struct {
-	bot                 *tgbotapi.BotAPI
-	repo                repository.Repository
-	messageTTLInMinutes int
+	bot       *tgbotapi.BotAPI
+	botConfig *BotConfig
+	repo      repository.Repository
 }
 
-func NewBot(bot *tgbotapi.BotAPI, repo repository.Repository, ttlInMinutes int) *Bot {
+type BotConfig struct {
+	MessageTTLInMinutes               int
+	MessageTTLInHours                 int
+	OutdatedMessagesSleepLimitInHours int
+}
+
+func NewBot(bot *tgbotapi.BotAPI, repo repository.Repository, botConfig *BotConfig) *Bot {
 	return &Bot{
-		bot:                 bot,
-		repo:                repo,
-		messageTTLInMinutes: ttlInMinutes,
+		bot:       bot,
+		repo:      repo,
+		botConfig: botConfig,
 	}
 }
 
 func (b *Bot) Start() error {
-	log.Printf("Authorized on account %s", b.bot.Self.UserName)
-
-	setParsingTime()
+	logrus.Printf("Level: telegram; func Start(): authorized on account %s", b.bot.Self.UserName)
 
 	updates := b.initUpdatesChannel()
-	go b.sendDataToSubscribers()
+	go b.deleteOutdatedMessages()
 	err := b.handleUpdates(updates)
 	if err != nil {
 		return err
@@ -66,87 +69,26 @@ func (b *Bot) initUpdatesChannel() tgbotapi.UpdatesChannel {
 	return b.bot.GetUpdatesChan(u)
 }
 
-func (b *Bot) sendDataToSubscribers() {
+func (b *Bot) deleteOutdatedMessages() {
 	for {
-		outdatedMessages, err := b.repo.Message.GetAllOutdatedMessages(b.messageTTLInMinutes)
+		lastFreshDate := time.Now()
+		lastFreshDate = lastFreshDate.Add(-time.Duration(b.botConfig.MessageTTLInMinutes) * time.Minute)
+		lastFreshDate = lastFreshDate.Add(-time.Duration(b.botConfig.MessageTTLInHours) * time.Hour)
+
+		logrus.Printf("Level: telegram; func deleteOutdatedMessages(): set fresh date: %v", lastFreshDate)
+
+		outdatedMessages, err := b.repo.Message.GetAllOutdatedMessages(lastFreshDate)
 		if err != nil {
 			return
 		}
 
 		for _, msg := range outdatedMessages {
-
 			deleteMsg := tgbotapi.NewDeleteMessage(msg.ChatId, msg.MessageId)
-
-			// Опционально, задайте время задержки перед удалением сообщения (например, 5 секунд)
-			//deleteMsg. = time.Second * 5
-
-			// Отправка запроса на удаление сообщения
 			_, err = b.bot.Send(deleteMsg)
-
-			//
-			//_, err = b.bot(delMsg)
-			//if err != nil {
-			//	log.Panic(err)
-			//}
 		}
 
-		for i := 0; i < len(outdatedMessages); i++ {
+		logrus.Printf("Level: telegram; func deleteOutdatedMessages(): taking timeout for %d hours...", b.botConfig.OutdatedMessagesSleepLimitInHours)
 
-		}
-
-		//err := b.compileParser()
-		//if err != nil {
-		//	logrus.Println("Error while compiling python script: %s", err.Error())
-		//}
-		//
-		//subscribers, err := b.repo.GetAllSubscribers()
-		//if err != nil {
-		//	log.Printf("Error in GetAllSubscribers(): %v", err.Error())
-		//	continue
-		//}
-		//
-		//logrus.Println("Starting sending data...")
-		//for _, sbs := range subscribers {
-		//	go b.sendData(sbs.ChatId)
-		//}
-		//logrus.Println("Finishing sending data...")
-
-		logrus.Println("Taking timeout...")
-		time.Sleep(time.Duration(b.messageTTLInMinutes) * time.Second)
+		time.Sleep(time.Duration(b.botConfig.OutdatedMessagesSleepLimitInHours) * time.Hour)
 	}
-}
-
-func (b *Bot) sendData(chatId int64) {
-	//filePath := b.parserData.ExcelFile
-	//
-	//file, err := os.Open(filePath)
-	//if !errors.Is(err, os.ErrNotExist) {
-	//	defer file.Close()
-	//
-	//	fileInfo, err := file.Stat()
-	//	if err != nil {
-	//		logrus.Println(err)
-	//	}
-	//
-	//	fileBytes := make([]byte, fileInfo.Size())
-	//
-	//	_, err = file.Read(fileBytes)
-	//	if err != nil {
-	//		logrus.Println(err)
-	//	}
-	//
-	//	fileBytesConfig := tgbotapi.FileBytes{Name: fileInfo.Name(), Bytes: fileBytes}
-	//
-	//	msg := tgbotapi.NewMessage(chatId, fmt.Sprintf("Версия от %s.\nКол-во обновлений: %s", parsingTime, parsingUpdateCounter))
-	//	_, err = b.bot.Send(msg)
-	//	if err != nil {
-	//		return
-	//	}
-	//
-	//	doc := tgbotapi.NewDocument(chatId, fileBytesConfig)
-	//	_, err = b.bot.Send(doc)
-	//	if err != nil {
-	//		return
-	//	}
-	//}
 }

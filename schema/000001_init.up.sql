@@ -24,6 +24,7 @@ CREATE TABLE subscribers_services
 CREATE TABLE subscribers_service_names
 (
     subscriber_id serial references subscribers (id) on delete cascade not null,
+    service_id    serial references services (id) on delete cascade    not null,
     service_name  varchar(128)                                         not null,
     PRIMARY KEY (subscriber_id, service_name)
 );

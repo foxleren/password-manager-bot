@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/foxleren/password-manager-bot/internal/models"
 	"github.com/jmoiron/sqlx"
+	"time"
 )
 
 type Subscriber interface {
@@ -15,16 +16,16 @@ type Subscriber interface {
 }
 
 type SubscriberService interface {
-	CreateSubscriberService(subscriberService *models.SubscriberService) (int, error)
 	CreateSubscriberServiceByName(subscriberID int, subscriberServiceName string) (int, error)
 	UpdateSubscriberServiceLogin(subscriberId int, subscriberServiceID int, subscriberServiceLogin string) error
 	UpdateSubscriberServicePassword(subscriberId int, subscriberServiceID int, subscriberServicePassword string) error
-	GetAllSubscriberServicesByName(chatId int64, serviceName string) ([]models.SubscriberServiceOutput, error)
+	GetSubscriberServiceByName(chatId int64, serviceName string) (*models.SubscriberServiceOutput, error)
+	DeleteSubscriberService(chatId int64, serviceName string) error
 }
 
 type Message interface {
 	CreateMessage(chatId int64, messageId int) (int, error)
-	GetAllOutdatedMessages(messageTTLInMinutes int) ([]models.Message, error)
+	GetAllOutdatedMessages(lastFreshDate time.Time) ([]models.Message, error)
 }
 
 type Repository struct {

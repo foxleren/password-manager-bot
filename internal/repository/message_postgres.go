@@ -33,18 +33,18 @@ func (p *MessagePostgres) CreateMessage(chatId int64, messageId int) (int, error
 	return id, nil
 }
 
-func (p *MessagePostgres) GetAllOutdatedMessages(messageTTLInMinutes int) ([]models.Message, error) {
+func (p *MessagePostgres) GetAllOutdatedMessages(lastFreshDate time.Time) ([]models.Message, error) {
 	var messages []models.Message
-	getAllQuery := fmt.Sprintf("SELECT * FROM %s WHERE message_date <= NOW() - INTERVAL '%d minutes'", messagesTable, messageTTLInMinutes)
-	err := p.db.Select(&messages, getAllQuery)
+	getAllQuery := fmt.Sprintf("SELECT * FROM %s WHERE message_date <= $1", messagesTable)
+	err := p.db.Select(&messages, getAllQuery, lastFreshDate)
 
 	if err != nil {
 		logrus.Printf("repo: GetAllOutdatedMessages(): err=%v", err.Error())
 		return nil, err
 	}
 
-	deleteCartItemByIDQuery := fmt.Sprintf("DELETE FROM %s WHERE message_date <= NOW() - INTERVAL '%d minutes'", messagesTable, messageTTLInMinutes)
-	_, err = p.db.Exec(deleteCartItemByIDQuery)
+	deleteCartItemByIDQuery := fmt.Sprintf("DELETE FROM %s WHERE message_date <= $1", messagesTable)
+	_, err = p.db.Exec(deleteCartItemByIDQuery, lastFreshDate)
 
 	if err != nil {
 		logrus.Printf("repo: GetAllOutdatedMessages(): err=%v", err.Error())

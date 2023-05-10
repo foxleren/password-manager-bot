@@ -28,8 +28,6 @@ func main() {
 		log.Panic(err)
 	}
 
-	//bot.Debug = true
-
 	db, err := repository.NewPostgresDB(repository.Config{
 		Host:     viper.GetString("db.host"),
 		Port:     viper.GetString("db.port"),
@@ -40,14 +38,27 @@ func main() {
 	})
 
 	repos := repository.NewRepository(db)
-	//services := service.NewService(repos)
 
-	messageTTLInMinutes, err := strconv.Atoi(viper.GetString("bot.messageTTLInMinutes"))
+	msgTTLInMinutes, err := strconv.Atoi(viper.GetString("bot.messageTTLInMinutes"))
 	if err != nil {
 		logrus.Fatalf("Caught error while parsing bot.messageTTLInMinutes ", err.Error())
 	}
 
-	tgBot := telegram.NewBot(bot, *repos, messageTTLInMinutes)
+	msgTTLInHours, err := strconv.Atoi(viper.GetString("bot.messageTTLInHours"))
+	if err != nil {
+		logrus.Fatalf("Caught error while parsing bot.messageTTLInHours ", err.Error())
+	}
+
+	outdatedMsgSleepInHours, err := strconv.Atoi(viper.GetString("bot.outdatedMessagesSleepIntervalInHours"))
+	if err != nil {
+		logrus.Fatalf("Caught error while parsing bot.outdatedMessagesSleepIntervalInHours ", err.Error())
+	}
+
+	tgBot := telegram.NewBot(bot, *repos, &telegram.BotConfig{
+		MessageTTLInMinutes:               msgTTLInMinutes,
+		MessageTTLInHours:                 msgTTLInHours,
+		OutdatedMessagesSleepLimitInHours: outdatedMsgSleepInHours,
+	})
 	if err = tgBot.Start(); err != nil {
 		log.Fatal(err)
 	}

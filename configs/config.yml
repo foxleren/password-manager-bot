@@ -1,7 +1,9 @@
 port: "8000"
 
 bot:
-  messageTTLInMinutes: 5
+  messageTTLInMinutes: 1
+  messageTTLInHours: 0
+  outdatedMessagesSleepIntervalInHours: 10
 
 db:
   host: "localhost"
