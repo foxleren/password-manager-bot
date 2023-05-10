@@ -7,7 +7,7 @@ bot:
 
 db:
   host: "db"
-  port: "5436"
+  port: "5432"
   username: "postgres"
   dbname: "postgres"
   sslmode: "disable"
